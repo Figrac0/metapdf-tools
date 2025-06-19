@@ -1,0 +1,20 @@
+# 1. Распаковать исходник в QDF (читаемый текстовый PDF)
+qpdf --qdf --stream-data=uncompress "Документ-2025-06-18-163754.pdf" "full_unpacked.qdf.pdf"
+
+# 2. (Опционально) Проверить доступные Tj-строки и map
+python extract_and_decode.py "full_unpacked.qdf.pdf"
+python extract_pdf_elements.py full_unpacked.qdf.pdf
+
+# 3. Выполнить интерактивную замену нужного текста в QDF
+python modify_qdf.py "full_unpacked.qdf.pdf" "modified_unpacked.qdf.pdf"
+# — когда скрипт спросит старый hex, введите:
+#     00ee0111011b011d010f01150116000300fd010c010d01180115011a(Пример)
+# — а в качестве нового текста введите, например:
+#     Петр Сергеевич
+
+# 4. Запаковать исправленный QDF обратно в PDF
+qpdf --stream-data=compress "modified_unpacked.qdf_fixed.pdf" "final_edited.pdf"
+
+
+
+
