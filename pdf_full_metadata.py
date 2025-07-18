@@ -7,7 +7,7 @@ from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import resolve1
 
-PDF_PATH = "D:/arst.hw/sv.code/MetaCheck/Документ-2025-06-18-163754.pdf"
+PDF_PATH = "D:/arst.hw/sv.code/HEX/original.pdf"
 
 
 def readable_date(date_str):

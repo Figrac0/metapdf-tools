@@ -1,20 +1,35 @@
-# 1. Распаковать исходник в QDF (читаемый текстовый PDF)
-qpdf --qdf --stream-data=uncompress "Документ-2025-06-18-163754.pdf" "full_unpacked.qdf.pdf"
+# 1) Распаковать оригинал в QDF
+qpdf --qdf --stream-data=uncompress original.pdf full_unpacked.qdf.pdf
 
-# 2. (Опционально) Проверить доступные Tj-строки и map
-python extract_and_decode.py "full_unpacked.qdf.pdf"
-python extract_pdf_elements.py full_unpacked.qdf.pdf
+# 2) Правка hex-строки (через ваш modify_qdf.py)
+python modify_qdf.py full_unpacked.qdf.pdf modified_unpacked.qdf.pdf
+#  → вводите:
+#    Старый hex (без <>): 024b025f026a025d025f026300030242025d0268026a025f025c026202710003024b0011
+#    Новый текст: Кирилл Павлович К.
+#  и получите modified_unpacked_qdf_fixed.pdf
 
-# 3. Выполнить интерактивную замену нужного текста в QDF
-python modify_qdf.py "full_unpacked.qdf.pdf" "modified_unpacked.qdf.pdf"
-# — когда скрипт спросит старый hex, введите:
-#     00ee0111011b011d010f01150116000300fd010c010d01180115011a(Пример)
-# — а в качестве нового текста введите, например:
-#     Петр Сергеевич
+# 3) Запустить fix-qdf, чтобы восстановить корректные длины потоков и XREF
+fix-qdf modified_unpacked.qdf.pdf > fixed_unpacked.qdf.pdf
 
-# 4. Запаковать исправленный QDF обратно в PDF
-qpdf --stream-data=compress "modified_unpacked.qdf_fixed.pdf" "final_edited.pdf"
+# 4) Собрать обратно в бинарный PDF, сохраняя прежние /ID и потоки
+qpdf `
+  --deterministic-id `
+  --static-id `
+  --object-streams=preserve `
+  --stream-data=compress `
+  fixed_unpacked.qdf.pdf `
+  compressed.pdf
 
+# 5) Скопировать все метаданные из оригинала (Info-словарь и XMP)  
+& "D:\exiftool-13.31_64\exiftool.exe" `
+    -overwrite_original `
+    -TagsFromFile original.pdf `
+    -all:all compressed.pdf
 
+# 6) Линейризовать (удалить остатки инкрементальных обновлений)  
+qpdf --linearize compressed.pdf final_perfect.pdf
 
-
+# 7) Проверки  
+qpdf --check final_perfect.pdf  
+pdfinfo final_perfect.pdf  
+python compare_pdf_objects.py original.pdf final_perfect.pdf
